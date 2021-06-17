@@ -279,7 +279,8 @@ class Client
      *
      * @return bool TRUE on success, FALSE on failure.
      */
-    private static function _login(
+    // This doesn't work on new versions of ROS
+    private static function _login_old_doesent_work(
         Communicator $com,
         $username,
         $password = '',
@@ -310,6 +311,36 @@ class Client
             return false;
         }
     }
+    
+    
+    // New login function that works
+    private static function _login(
+                Communicator $com,
+                $username,
+                $password = '',
+                $timeout = null
+            ) 
+            {
+                $request = new Request('/login');
+                $request->setArgument('name', $username);
+                $request->setArgument('password', $password);
+                $request->verify($com)->send($com);
+                
+            $response = new Response($com, false, $timeout);
+            if ($response->getType() === Response::TYPE_FINAL) {
+                return null === $response->getProperty('ret');
+            } 
+            else 
+            {
+                while ($response->getType() !== Response::TYPE_FINAL
+                && $response->getType() !== Response::TYPE_FATAL
+                ) 
+                {
+                    $response = new Response($com, false, $timeout);
+                }
+                    return false;
+            }
+        }
 
     /**
      * Sets the charset(s) for this connection.
